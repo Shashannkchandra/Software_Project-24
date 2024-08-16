@@ -1,0 +1,59 @@
+// src/App.js
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function App() {
+  const [expenses, setExpenses] = useState([]);
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
+
+  const addExpense = async () => {
+    await axios.post('http://localhost:5000/expenses', { amount, category });
+    setExpenses([...expenses, { amount, category }]);
+    setAmount('');
+    setCategory('');
+  };
+
+  return (
+    <div>
+      <h1>Expense Tracker</h1>
+      <input
+        type="number"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder="Amount"
+      />
+      <input
+        type="text"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        placeholder="Category"
+      />
+      <button onClick={addExpense}>Add Expense</button>
+      <ul>
+        {expenses.map((expense, index) => (
+          <li key={index}>{`${expense.category}: $${expense.amount}`}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
+
+
+Backend (Django):
+# views.py
+from django.shortcuts import render
+from django.http import JsonResponse
+from .models import Expense
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def add_expense(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        expense = Expense(amount=data['amount'], category=data['category'])
+        expense.save()
+        return JsonResponse({'status': 'success'})
